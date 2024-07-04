@@ -6,7 +6,7 @@ import osmnx as ox
 from folium import plugins
 
 # Step 1: Read the CSV file, skipping the header row
-df = pd.read_csv('jeepney_lines.csv', header=0)
+df = pd.read_csv(r'makatijeepney\manilaRoutesNew\jeepney_lines.csv', header=0)
 
 # Print out the DataFrame to verify it's loaded correctly
 print("DataFrame loaded:")
@@ -27,12 +27,9 @@ def parse_latlong(latlong_str):
         print(f"Error parsing lat-long string '{latlong_str}': {e}")
         return None
 
-# Limit the DataFrame to the first 15 rows
-df_limited = df.head(15)
-
-# Get the bounding box for the area of interest from the limited DataFrame
-latitudes = [parse_latlong(stop)[0] for _, row in df_limited.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]
-longitudes = [parse_latlong(stop)[1] for _, row in df_limited.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]
+# Get the bounding box for the area of interest from the entire DataFrame
+latitudes = [parse_latlong(stop)[0] for _, row in df.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]
+longitudes = [parse_latlong(stop)[1] for _, row in df.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]
 north, south = max(latitudes), min(latitudes)
 east, west = max(longitudes), min(longitudes)
 
@@ -66,7 +63,7 @@ def draw_route(start, end):
         print(f"Error drawing route from {start} to {end}: {e}")
 
 # Step 4: Add nodes and edges to the map
-for _, row in df_limited.iterrows():
+for _, row in df.iterrows():
     print("Processing row...")
     line_stops = [parse_latlong(stop) for stop in row.dropna() if parse_latlong(stop) is not None]
     
@@ -81,11 +78,11 @@ for _, row in df_limited.iterrows():
         print("No valid stops in this row.")
 
 # Add node markers (optional)
-for node in [(parse_latlong(stop)) for _, row in df_limited.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]:
+for node in [(parse_latlong(stop)) for _, row in df.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]:
     folium.CircleMarker(location=[node[0], node[1]], radius=5, color='red', fill=True, fill_color='red', fill_opacity=0.7).add_to(m)
 
 # Optionally, add a marker cluster
-plugins.MarkerCluster(locations=[(node[0], node[1]) for node in [(parse_latlong(stop)) for _, row in df_limited.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]]).add_to(m)
+plugins.MarkerCluster(locations=[(node[0], node[1]) for node in [(parse_latlong(stop)) for _, row in df.iterrows() for stop in row.dropna() if parse_latlong(stop) is not None]]).add_to(m)
 
 # Save the map to an HTML file and open it
 m.save('jeepney_map_with_routes.html')
